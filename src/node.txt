@@ -1,0 +1,227 @@
+传统的搭建SpringMVC框架的过程：
+1，添加一堆的依赖；
+2，在resources目录下添加application.xml配置文件
+    1，开启注解扫描
+     2，开启SpringMVC注解驱动支持
+     3，配置静态资源的处理
+     4，配置视图解析器
+3，在web.xml中配置DispatcherServlet的前端请求分发器。
+-------------------------------------------------------
+1,创建SpringBoot项目的三种方式：
+    1，通过IDEA或Eclipse的Spring Initializr创建
+    2，访问https://start.spring.io创建SpringBoot的骨架
+    3，自动手动搭建
+2，SpringBoot应用的基本结构
+    pom.xml
+    src
+        main
+            java
+                DemoApplication
+            resources
+                application.properties
+                templates
+                static
+        test
+3,创建第一个SpringBoot项目
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.1.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+运行项目在控制台出现图标表示SpringBoot启动成功。
+4，关于SpringBoot利用Maven创建项目时，各项目间的引用关系
+    1，创建父模块，里面只有一个pom.xml，并且打包方式为pom；
+        parent标签表示继承的父pom文件，在父pom中定义的depedencies标签里的包都直接被子模块自动继承了。
+        depedencyManagerment标签表示父pom中定义的子模块可引用也可选择不引用的模块，如果子模块需要引用可省略version标签，版本由父模块统一管理。
+    2，其他的模块采用quickstart方式建立，打包为jar包即可。
+5，分析
+    1，继承spring-boot-stater-parent，引入基本的依赖管理配置(如果是单模块，可以使用SpringBoot自带的parent父模块标签，但是如果实际项目中有公用的父模块依赖，则可以不用此标签模块)；
+    2，引入spring-boot-stater-web,自动引入了springweb(如SpringMVC等)相关的包；
+    3，@SpringApplication由三个主要的标签构成：@SpringBootConfiguration,@EnableAutoConfiguration，@ComponentScan
+        1）@SpringBootConfiguration:本质是一个@Configuration，代表这是Spring使用这个标签自动的把内置的符合条件的Configuration类加载进入应用；
+        2）@EnableAutoConfiguration:开启自动配置，Springboot使用这个标签自动的把内置的符合条件的@Configuration类加载进入应用；
+        3）@ComponentScan：自动扫描。
+     4，SpringApplication.run:这个是SpringBoot为我们提供的最大区别，在于springboot不再是一个web应用，不需要我们自己去打包、部署，启动tomcat，Springboot默认
+     把tomcat打包到应用中，我们可以正常的运行jar的方式来运行SpringBoot应用。
+6, SpringBoot中的参数设置
+     SpringBoot中主要的参数来源及优先级：
+        1，命令行参数;(在需要传参的地方注入ApplicationArguments，通过applicationArguments.getNonOptionArgs()方法获取到参数，参数值的输入可在项目启动时Edit Configuration-->Program arguments,参数以key-value形式传入)
+        2，ServletConfig和ServletContext传参；
+        3，操作系统环境变量；
+        4，application-{profile}.properties或YAML文件；
+        5，application.properties或YAML文件；
+     SpringBoot提供了properties绑定机制，其有如下几种方式来创建properties文件：
+        1，当前resources目录下的/config子目录；
+        2，当前resources目录下；
+        3，classpath项目omp.web根目录下的/config子目录；
+        4，classpath项目omp.web根目录下；
+        以上配置文件加载顺序优先级从下至上，如在根目录下直接创建的properties文件设置端口8082，在根目录下config子目录下创建properties文件端口8083，则项目最终端口为8083，因为后者将前者端口覆盖了。
+        注：相同属性按照优先级覆盖，不同属性则是合并的，比如在根目录下设置了项目跟路径为/crm，则访问时需要输入XXXX:8083/crm/**来进行访问。
+7,程序启动时读取banner.txt配置文件：
+    在resources目录下创建banner.txt文本文件，默认情况下启动程序会直接在控制台输入banner.txt文件内容，控制其不打印出来有两种方式：
+    1，在application.properties中：spring.main.banner-mode=off
+    2，在程序启动入口处添加：application.setBannerMode(Banner.Mode.OFF);
+8，SpringBoot的热部署：
+    除了使用JRebel来实现热部署，还可以使用Springboot提供的spring-boot-devtools包来完成SpringBoot应用的热部署
+    <!--SpringBoot热部署-->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-devtools</artifactId>
+                <version>1.5.4.RELEASE</version>
+                <optional>true</optional>
+            </dependency>
+    原理：
+        SpringBoot热部署采用重启的方式，其中有两个ClassLoader，一个用来监控不变的类(jar)（basicClassLoeader）、一个是监控自己写的类(RestaterClassLoeader)是否有做修改，如果有修改则将之前的废弃掉重新加载，否则不变。
+    对于static以及templates下面的静态资源在热部署中不会导致服务重启(即控制台不会输出任何日志信息)。
+    排除资源方式：
+    spring.devtools.restart.exclude=static/**,templates/**
+    spring.devtools.restart.additional-exclude=public/**（处理默认配置排除之外的）
+    spring.devtools.restart.enabled=false(禁用重启策略)
+    除此之外还可采用triggerfile的重启策略(即只有重新编译+修改trigger.file文件内容两者同时满足时才能重启服务)：
+    spring.devtools.restart.triggerFile=trigger.file(注意：这个文件不要放在default_exclude目录下面)
+9,spring-boot-starter-parent简介：
+    1，包含了常用版本属性；
+        如果要修改java编译版本，只需要修改pom.xml中<properties>标签里的java.version即可，即：<properties><java.version>1.7</java.version></properties>
+    2,包含了常用的dependencyManagerment
+    3,SpringBoot非常优秀的地方在于提供了非常多以spring-boot-starter.*开头的开箱即用的工具包，常见工具包有以下：
+        spring-boot-starter:核心的工具包，提供了自动配置的支持，日志和YAML配置支持；
+        spring-boot-starter-activemq:针对快速集成ActiveMQ的工具包；
+        spring-boot-starter-aop:提供了快速集成SpringAOPen和AspecJ的工具包；
+        spring-boot-data-redis:提供了快速集成redis与Jedis的工具包；
+        spring-boot-starter-freemarker:提供了快速集成Freemarker的工具包；
+        spring-boot-starter-mail：提供了快速集成邮件发送的工具包；
+        spring-boot-starter-test:提供了对Springboot应用的测试工具包；
+        spring-boot-starter-web:提供了对web开发的工具包，包括基于springMVC的restful应用开发，内置的tomcat服务器等。
+        spring-boot-starter-actuator:提供了对生产环境中应用监控的工具包；
+        spring-boot-starter-logging:提供了对日志的工具包，默认使用Logback;
+spring-boot-starter-xxx:SpringBoot中自带的starter(以xxx结尾);xxx-spring-boot-starter:第三方和SpringBoot集成提供的starter;
+如：druid-spring-boot-starter(包含druid数据源的原始依赖+自动配置功能的依赖);
+10,数据库连接dataSource相关依赖：
+<!-- https://mvnrepository.com/artifact/com.alibaba/druid-spring-boot-starter -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.9</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.44</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+            <version>1.5.4.RELEASE</version>
+        </dependency>
+    Mybatis集成：
+        1，引入依赖：
+        <dependency>
+                    <groupId>org.mybatis.spring.boot</groupId>
+                    <artifactId>mybatis-spring-boot-starter</artifactId>
+                    <version>1.3.2</version>
+        </dependency>
+        2，正常完成mapper接口和mapper.xml配置文件编写
+        3，mybatis-spring-boot-starter提供了以下配置(具体参考MybatisProperties对象)：
+            mybatis.configLocation:mybatis的配置文件地址；
+            mybatis.mapperLocations:映射文件地址；
+            mybatis.typeAliasesPackage:别名扫描包；
+            logging.level.项目名.mapper接口目录=debug:输出sql执行语句
+        4，使用@MapperScan标签扫描mapper接口
+    基于注解的事务管理步骤：
+        1，在主配置类上加上@EnableTransactionManagement表示开启事务注解驱动，等价于xml配置中的<tx:annotation-driven/>
+        2,在需要事务的Service类上加上@Transactional注解，表示该类下面的所有方法都需要事务。
+11,SpringBoot自动装配原理：
+    1，SpringApplication.run(Appconfig.class,args)执行流程中有refreshContext(context)这句话；
+    2，refreshContext(context)内部会解析我们的配置类上的标签实现自动装配功能的注解@EnableAutoConfiguration
+    3，会解析@EnableAutoConfiguration这个注解里面的@Import引入的配置类AutoConfigurationImportSelector
+    4,AutoConfigurationImportSelector这个类中有这个方法SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),getBeanClassLoader());
+    5,SpringFactoriesLoader.loadFactoryNames的作用就是读取jar包中的/项目的META-INF/spring.factories文件
+    6，spring.factories配置了自动装配的类，比如：com.alibaba,druid.spring.boot.autoconfigure.DruidDataSourceAutoConfigure
+    7,根据条件给我们自动装配bean
+    补充知识：
+    @ConditionalOnBean(仅仅在当前上下文中存在某个对象时，才会实例化一个Bean)
+    @ConditionalOnClass(某个class位于类路径上，才会实例化一个Bean)
+    @ConditionalOnExpression(当表达式为true时才会实例化一个Bean)
+    @ConditionalOnMissingBean（仅仅在当前上下文中不存在某个对象时，才会实例化一个Bean）
+    @ConditionalOnMissingClass(某个class类路径下不存在的时候，才会实例化一个Bean)
+    @ConditionalOnNotWebApplication(不是web应用)
+ 12，SpringBoot对静态资源的加载：
+    1，默认情况下，SpringBoot会从classpath下的/static、/public、/resources、/META-INF/resources下加载静态资源；
+    2，可以通过修改spring.resources.staticLocations来修改静态资源加载地址；
+    如：  spring.resources.static-locations=classpath:/META-INF/resources,classpath:/mydir,,,,,(多个路径之间用","号隔开)
+    3，因为应用是打成jar包，所以之前的src/main/webapp不会加载。
+    SpringBoot与Freemarker集成：
+    （注：为什么不用JSP，因为SpringBoot对JSP支持不是很好！）
+        1，引入spring-boot-starter-freemarker
+        <dependency>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-starter-freemarker</artifactId>
+              <version>2.0.1.RELEASE</version>
+        </dependency>
+        2，SpringBoot对freemarker的配置：
+            1，spring.freemarker.enabled=true   是否开启freemarker支持，默认是开启的
+            2，spring.freemarker.allow-request-override=true    是否允许request中的属性覆盖model中同名属性，默认false
+            3，spring.freemarker.allow-session-override=true    是否允许session中的属性覆盖model中同名属性，默认为false
+            4，spring.freemarker.cache=true    是否支持模板缓存，默认false
+            5，spring.freemarker.charset=UTF-8   模板编码
+            6，spring.freemarker.content-type=text/html    模板类型
+            7，spring.freemarker.expose-request-attributes=true   是否开启request属性expose，默认false
+            8，spring.freemarker.expose-session-attributes=false  是否开启session属性expose，默认false   如果打开则在页面上也能取到session相关数据
+            9，spring.freemarker.expose-spring-marco-helpers=false  是否开启spring的freemarker宏支持，默认false
+            10，spring.freemarker.prefer-file-system-access=false 支持实时检查模板修改，默认为true
+            11，spring.freemarker.prefix=/*  加载模板时的前缀
+            12，spring.freemarker.settings.*    直接配置freemarker参数
+            13, spring.freemarker.suffix=*.ftl   模板文件后缀
+            14，spring.freemarker.template-loader-path=classpath:/templates/   模板加载地址
+13，SpringBoot中的统一异常处理
+    1，通过使用@ControllerAdvice定义统一的异常处理类，而不是在每个Controller中逐个定义，@ExceptionHandler用来定义函数针对的异常类型
+    2，统一的异常页面：
+        1，SpringBoot默认情况下，把所有错误都重新定位到/error这个处理路径上，由BasicErrorController类完成处理
+        2，SpringBoot提供了默认的替换错误页面的路径。
+    静态错误页面默认结构
+    src/resources/public/error/404(或者500,5xx...).html或者src/resources/public/error/404(或者500,5xx...).ftl
+14,SpringBoot与Servlet相关：
+    1，定义tomcat容器：
+        server.port:定义监听端口
+        server.session.timeout:session有效时间
+    2，添加servlet组件：
+        1，在配置类上添加@ServletComponentScan，会自动扫描添加了@WebServlet,@WebFilter,@WebListener类；
+        2，通过创建ServletListenerRegistrationBean,ServletRegistrationBean和FilterRegistrationBean来完成注册；
+        @Bean
+        public ServletListenerRegistrationBean<MyServletListener> myListener(){
+            return new ServletListenerRefistrationBean<>(new MyServletListener());
+        }
+15,SpringBoot文件上传
+        1，仍然使用MultipartFile完成上传，SpringBoot是使用Servlet3中的Part对象完成上传，不是使用的fileiupload;
+        2,上传相关配置：
+            spring.http.multipart.enabled=true   是否允许处理上传
+            spring.http.multipart.maxFileSize=1MB  允许最大的单文件上传大小，单位可以是kb,mb
+            spring.http.multipart.maxRequestSize=10MB  允许的最大请求大小
+        3，也可以通过创建一个MultipartConfigElement类型的bean对上传进行配置：
+            @Bean
+            public MultipartConfigElement multipartConfigElement(){
+                MultipartConfigFactory mcf = new MultipartConfigFactory();
+                mcf.setMaxFileSize("1MB");
+                mcf.setMaxRquestSize(10MB);
+                return mcf.createMultipartConfig();
+            }
+        4,关于上传文件的处理：
+            因为应用是打成jar包，所以一般会把上传的文件放到其他位置，并通过设置spring.resources.static-locations来完成资源位置映射
+            spring.resources.static-locations=classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,
+        ApringBoot中自定义拦截器(InterceptorHandler),并将多个拦截器注册到spring容器中。
+        自定义拦截器可集成HandlerInterceptorAdapter,在程序启动类中继承WebMvcConfigurationSupport,实现其addInterceptors进行注册，
+        对于乱码问题，可通过重写其configureMessageConverters方法
+
+
+
+
+
+
+
+
+

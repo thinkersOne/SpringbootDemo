@@ -1,0 +1,25 @@
+@SpringApplication由三个主要的标签构成：@SpringBootConfiguration,@EnableAutoConfiguration，@ComponentScan
+1）@SpringBootConfiguration:本质是一个@Configuration，代表这是Spring使用这个标签自动的把内置的符合条件的Configuration类加载进入应用；
+2）@EnableAutoConfiguration:开启自动配置，Springboot使用这个标签自动的把内置的符合条件的@Configuration类加载进入应用；
+3）@ComponentScan：自动扫描。
+--Spring中常见的将某个对象实例化的注解如下：
+@controller：用于标注控制层，相当于struts中的action层
+@service：用于标注服务层，主要用来进行业务的逻辑处理
+@repository：用于标注数据访问层，也可以说用于标注数据访问组件，即DAO组件.
+@component：泛指各种组件，就是说当我们的类不属于各种归类的时候（不属于@Controller、@Services等的时候），我们就可以使用@Component来标注这个类。
+--------------------------
+@ConfigurationProperties(prefix="db")：参数绑定标签，可以非常方便的把资源文件中的内容绑定到对象上。
+@ConfigurationProperties支持松绑定，即：db.userName=xx-->db-user-name=xx-->db_user_name=xx-->db.user-name=xx   总的来说就是："."等价于"-"等价于"_"等价于"首字母大写"
+如果是自己写的类，则直接在类上面加上该注解即可，如果是第三方类，则可以在方法上加上该注解
+@Primary注解：一般用在接口同名时指定某个接口，则程序扫描时会优先加载并实例化该对象
+@Bean：用在方法上，表示通过一个方法创建一个对象实例，并将这个实例交给spring容器管理，另一个方法可通过@Qualifier("beanName")注解获得该实例
+@Qualifier：当多个bean实例存在类型相同时，通过指定beanName的方式缩小查找范围。
+我们所要获取的前端传递参数大概可以分为以下四类：
+@PathVariable:requet uri,注解 把URI template 中变量 的值，绑定到方法的参数上。若方法参数名称和需要绑定的uri template中变量名称不一致，需要在@PathVariable("name")指定uri template中的名称。
+@RequestHeader:注解 可以把Request请求header部分的值绑定到方法的参数上，如果，@RequestHeader绑定的参数，在请求头部并没有的话，会报错，比如Cookie。
+@CookieValue:可以把Request header中关于cookie的值绑定到方法的参数上。
+@RequestParam:该注解有两个属性：value、required，用法同Request.getParameter()；value用来指定要传入值的id名称，required用来指示参数是否必须绑定；
+@RequestBody：处理Content-Type: 不是application/x-www-form-urlencoded编码的内容，如：application/json ，application/xml等；
+attribute 类型是注解： @SessionAttributes, @ModelAttribute
+
+
